@@ -1,58 +1,93 @@
-const track = document.getElementById("image-track");
+document.addEventListener('DOMContentLoaded', () => {
+  const hamburger = document.querySelector('.hamburger');
+  const navLinks = document.querySelector('.nav-links');
 
-const handleOnDown = e => track.dataset.mouseDownAt = e.clientX;
+  if (hamburger && navLinks) {
+    hamburger.addEventListener('click', () => {
+      navLinks.classList.toggle('open');
+      hamburger.classList.toggle('toggle');
 
-const handleOnUp = () => {
-  track.dataset.mouseDownAt = "0";  
-  track.dataset.prevPercentage = track.dataset.percentage;
-}
+      navLinks.querySelectorAll('li').forEach((link) => {
+        link.classList.toggle('fade');
+      });
+    });
 
-const handleOnMove = e => {
-  if(track.dataset.mouseDownAt === "0") return;
-  
-  const mouseDelta = parseFloat(track.dataset.mouseDownAt) - e.clientX,
-        maxDelta = window.innerWidth / 2;
-  
-  const percentage = (mouseDelta / maxDelta) * -100,
-        nextPercentageUnconstrained = parseFloat(track.dataset.prevPercentage) + percentage,
-        nextPercentage = Math.max(Math.min(nextPercentageUnconstrained, 0), -100);
-  
-  track.dataset.percentage = nextPercentage;
-  
-  track.animate({
-    transform: `translate(${nextPercentage}%, -50%)`
-  }, { duration: 1200, fill: "forwards" });
-  
-  for(const image of track.getElementsByClassName("image")) {
-    image.animate({
-      objectPosition: `${100 + nextPercentage}% center`
-    }, { duration: 1200, fill: "forwards" });
+    navLinks.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        hamburger.classList.remove('toggle');
+
+        navLinks.querySelectorAll('li').forEach((item) => {
+          item.classList.remove('fade');
+        });
+      });
+    });
   }
+});
+
+window.addEventListener('resize', () => {
+  const navLinks = document.querySelector('.nav-links');
+  const hamburger = document.querySelector('.hamburger');
+
+  if (window.innerWidth > 800 && navLinks) {
+    navLinks.classList.remove('open');
+    navLinks.querySelectorAll('li').forEach((item) => item.classList.remove('fade'));
+  }
+
+  if (hamburger) {
+    hamburger.classList.remove('toggle');
+  }
+});
+
+if (document.getElementById('image-track')) {
+  const track = document.getElementById('image-track');
+
+  const handleOnDown = (e) => {
+    track.dataset.mouseDownAt = String(e.clientX);
+  };
+
+  const handleOnUp = () => {
+    track.dataset.mouseDownAt = '0';
+    track.dataset.prevPercentage = track.dataset.percentage || '0';
+  };
+
+  const handleOnMove = (e) => {
+    if (track.dataset.mouseDownAt === '0') return;
+
+    const mouseDelta = Number(track.dataset.mouseDownAt) - e.clientX;
+    const maxDelta = window.innerWidth / 2;
+    const percentage = (mouseDelta / maxDelta) * -100;
+    const nextPercentageUnconstrained = (Number(track.dataset.prevPercentage || 0) + percentage);
+    const nextPercentage = Math.max(Math.min(nextPercentageUnconstrained, 0), -100);
+
+    track.dataset.percentage = String(nextPercentage);
+
+    if (track.animate) {
+      track.animate({ transform: `translate(${nextPercentage}%, -50%)` }, { duration: 1200, fill: 'forwards' });
+    }
+
+    for (const image of track.getElementsByClassName('image')) {
+      if (image.animate) {
+        image.animate({ objectPosition: `${100 + nextPercentage}% center` }, { duration: 1200, fill: 'forwards' });
+      }
+    }
+  };
+
+  window.onmousedown = handleOnDown;
+  window.ontouchstart = (e) => handleOnDown(e.touches[0]);
+  window.onmouseup = handleOnUp;
+  window.ontouchend = (e) => handleOnUp(e.touches[0]);
+  window.onmousemove = handleOnMove;
+  window.ontouchmove = (e) => handleOnMove(e.touches[0]);
 }
-
-/* -- Had to add extra lines for touch events -- */
-
-window.onmousedown = e => handleOnDown(e);
-
-window.ontouchstart = e => handleOnDown(e.touches[0]);
-
-window.onmouseup = e => handleOnUp(e);
-
-window.ontouchend = e => handleOnUp(e.touches[0]);
-
-window.onmousemove = e => handleOnMove(e);
-
-window.ontouchmove = e => handleOnMove(e.touches[0]);
-
 
 const observer = new IntersectionObserver((entries) => {
   entries.forEach((entry) => {
-      console.log(entry)
-      if (entry.isIntersecting) {
-          entry.target.classList.add('show');
-      } else {
-          entry.target.classList.remove('show');
-      }
+    if (entry.isIntersecting) {
+      entry.target.classList.add('show');
+    } else {
+      entry.target.classList.remove('show');
+    }
   });
 });
 
@@ -60,50 +95,326 @@ const hiddenElements = document.querySelectorAll('.jude');
 hiddenElements.forEach((el) => observer.observe(el));
 
 (function () {
-  "use strict";
+  'use strict';
 
-  // define variables
-  var items = document.querySelectorAll(".timeline li");
+  const items = document.querySelectorAll('.timeline li');
 
-  // check if an element is in viewport
-  // http://stackoverflow.com/questions/123999/how-to-tell-if-a-dom-element-is-visible-in-the-current-viewport
   function isElementInViewport(el) {
-    var rect = el.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
     return (
       rect.top >= 0 &&
       rect.left >= 0 &&
-      rect.bottom <=
-        (window.innerHeight || document.documentElement.clientHeight) &&
+      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
       rect.right <= (window.innerWidth || document.documentElement.clientWidth)
     );
   }
 
   function callbackFunc() {
-    for (var i = 0; i < items.length; i++) {
+    for (let i = 0; i < items.length; i++) {
       if (isElementInViewport(items[i])) {
-        items[i].classList.add("in-view");
+        items[i].classList.add('in-view');
       }
     }
   }
 
-  // listen for events
-  window.addEventListener("load", callbackFunc);
-  window.addEventListener("resize", callbackFunc);
-  window.addEventListener("scroll", callbackFunc);
+  window.addEventListener('load', callbackFunc);
+  window.addEventListener('resize', callbackFunc);
+  window.addEventListener('scroll', callbackFunc);
 })();
 
-const hamburger = document.querySelector(".hamburger");
-const navLinks = document.querySelector(".nav-links");
-const links = document.querySelectorAll(".nav-links li");
+const hamburger = document.querySelector('.hamburger');
+const navLinks = document.querySelector('.nav-links');
 
-hamburger.addEventListener('click', ()=>{
-   //Animate Links
-    navLinks.classList.toggle("open");
-    links.forEach(link => {
-        link.classList.toggle("fade");
+if (hamburger && navLinks) {
+  hamburger.addEventListener('click', () => {
+    navLinks.classList.toggle('open');
+    hamburger.classList.toggle('toggle');
+  });
+}
+
+if (navLinks) {
+  navLinks.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => {
+      navLinks.classList.remove('open');
+      if (hamburger) hamburger.classList.remove('toggle');
     });
+  });
+}
 
-    //Hamburger Animation
-    hamburger.classList.toggle("toggle");
-});
+if (typeof IntersectionObserver === 'undefined') {
+  document.querySelectorAll('.jude').forEach((el) => el.classList.add('show'));
+}
+
+
+
+
+
+
+
+"use strict";
+
+const nav = document.querySelector('.nav-links');
+if (nav) {
+  nav.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => nav.classList.remove('open'));
+  });
+}
+
+if (document.querySelector('.hamburger')) {
+  document.querySelector('.hamburger').addEventListener('click', () => {
+    if (nav) nav.classList.toggle('open');
+  });
+}
+
+if (document.querySelector('.hamburger')) {
+  document.querySelector('.hamburger').classList.remove('toggle');
+}
+
+if (window.innerWidth <= 800 && nav) {
+  nav.classList.remove('open');
+}
+
+if (document.querySelector('.toggle')) {
+  document.querySelector('.toggle').classList.remove('toggle');
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
